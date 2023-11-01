@@ -4,19 +4,31 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import{MainContainer, ChatContainer, MessageList, Message, MessageInput, TypingIndicator} from "@chatscope/chat-ui-kit-react"
+import { Canvas } from "@react-three/fiber";
+import { useGLTF, Stage, PresentationControls } from "@react-three/drei";
+import speaking from '/animations/doctor-speaking-mic.gif';
+import waving from '/animations/doctor-waving.gif';
 
 const API_KEY = "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";
 
 function App() {
+  
   const [typing, setTyping] = useState(false);
+  const [messageLoaded, setMessageLoaded] = useState(false);
   const [messages, setMessages] = useState([
     {
-      message: "Hello I am ChatGPT",
+      message: "Hello I am DocGPT",
       sender: "ChatGPT"
     }
   ])
 
   const handleSend = async (message) => {
+    const toggleState = () => {
+  setMessageLoaded(true);
+  setTimeout(() => {
+    setMessageLoaded(false);
+  }, 5000);
+};
     const newMessage = {
       message: message,
       sender: "user",
@@ -27,9 +39,10 @@ function App() {
     setMessages(newMessages);
 
     //set a typing indicator (chatgpt is typing)
-    setTyping(true);    
+    setTyping(true);
     //process message to chatGPT
     await processMessageToChatGPT(newMessages);
+    toggleState();
   }
 
   async function processMessageToChatGPT(chatMessages) {
@@ -45,7 +58,7 @@ function App() {
 
     const systemMessage = {
       role: "system",
-      content: "Speak like a pirate." //this is the part we would change to speak like a doctor
+      content: "speak like a doctor, and ONLY respond to questions about medicine" //this is the part we would change to speak like a doctor
     }
 
     const apiRequestBody = {
@@ -75,17 +88,33 @@ function App() {
         }]
       );
       setTyping(false);
+      const toggleState = () => {
+  setMessageLoaded(true);
+  setTimeout(() => {
+    setMessageLoaded(false);
+  }, 5000);
+};
+
     });
+  }
+
+  function Model(props) {
+    const { scene } = useGLTF('/animations/doctor-talking.glb');
+    return <primitive object={scene} scale={0.01} {...props} />;
   }
 
   return (
     <>
-      <div style={{position: "relative", height: "800px", width:"700px"}}>
+    <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div style={{position:"relative"}}>
+      {messageLoaded ? <img style={{ width: 700, height: 800 }} src = {speaking} alt="doctor-speaking" /> : <img style={{ width: 700, height: 800 }} src = {waving} alt="doctor-waving" />}
+    </div>
+      <div style={{position: "relative", height: "800px", width:"700px", zIndex:"3"}}>
         <MainContainer>
           <ChatContainer>
             <MessageList
                scrollBehavior='smooth'
-               typingIndicator = {typing ? <TypingIndicator content="ChatGPT is typing" /> : null}
+               typingIndicator = {typing ? <TypingIndicator content="DocGPT is typing" /> : null}
             >
               {messages.map((message, i) => {
                 return <Message key={i} model={message}/>
@@ -94,6 +123,7 @@ function App() {
             <MessageInput placeholder='Type Message Here' onSend={handleSend}/>
           </ChatContainer>
         </MainContainer>
+      </div>
       </div>
     </>
   )
